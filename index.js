@@ -10,7 +10,7 @@ app.use(cors({
   origin:"*"
 }));
 app.use(express.json());
-
+// root
 app.get("/", (req, res) => {
   res.send("Running");
 });
@@ -21,6 +21,7 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
 
 const run = async () => {
   try {
