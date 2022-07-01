@@ -1,35 +1,75 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 const port = process.env.PORT || 5000;
-const app = express()
+const app = express();
 
 // MiddleWare
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-app.get('/', (req,res)=>{
-    res.send("Running")
-})
-
+app.get("/", (req, res) => {
+  res.send("Running");
+});
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qjk5i.mongodb.net/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
 
-const run = async() =>{
-try{
-await client.connect();
-console.log("connect");
-const taskCollection = client.db("endGame").collection('tasks')
+const run = async () => {
+  try {
+    await client.connect();
+    console.log("connect");
+    const taskCollection = client.db("endGame").collection("tasks");
+    const completeTaskCollection = client.db("endGame").collection("completeTask");
 
+    app.post("/addTask", async (req, res) => {
+      const data = req.body;
+      const addedTask = await taskCollection.insertOne(data);
+      res.send(addedTask);
+    });
 
-}
-finally{
+    app.post("/complete", async (req, res) => {
+      const data = req.body;
+      const addedTask = await completeTaskCollection.insertOne(data);
+      res.send(addedTask);
+    });
+    app.get("/allCompleteTask", async (req, res) => {
+      const completeTask = await completeTaskCollection.find({}).toArray();
+      res.send(completeTask);
+    });
 
-}
-}
-run().catch(console.dir)
-app.listen(port,()=>{
-    console.log("port is running on ",port)
-})
+    app.get("/allTask", async (req, res) => {
+      const allTasks = await taskCollection.find({}).toArray();
+      res.send(allTasks);
+    });
+
+    app.get("/allTask/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const task = await taskCollection.findOne(query);
+      res.send(task);
+    });
+   
+    app.put('/allTask/:id', async (req, res) => {
+            const id = req.params.id;
+            const updateTask = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: updateTask
+            };
+            const result = await taskCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+
+        })
+  } finally {
+  }
+};
+run().catch(console.dir);
+app.listen(port, () => {
+  console.log("port is running on ", port);
+});
